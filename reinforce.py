@@ -1,7 +1,7 @@
 import numpy as np
 from lqr import cost, optimal_gain, spectral_radius
 
-def reinforce_gradient(K, sys, N, T, sigma, rng):
+def reinforce_gradient(K, sys, N, T, sigma, rng, return_state_cov=False):
     """
     Score-function gradient estimate with reward-to-go and baseline.
     Policy: u = Kx + sigma * eps.
@@ -24,6 +24,10 @@ def reinforce_gradient(K, sys, N, T, sigma, rng):
 
     resid = (U - X[:, :T, :] @ K.T) / sigma**2      # grad log pi factor, (N, T, m)
     ghat = np.einsum('itm,itn,it->mn', resid, X[:, :T, :], adv) / N
+
+    if return_state_cov:
+        sigma_hat = np.einsum('itm,itn->mn', X[:, :T, :], X[:, :T, :]) / (N * T)
+        return ghat, sigma_hat
     return ghat
 
 def run_reinforce(sys, K0, eta, N, T, sigma, budget, rng):
